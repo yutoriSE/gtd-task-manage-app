@@ -77,6 +77,14 @@ class TaskNotifier extends StateNotifier<List<Task>> {
       completedAt: null,
     ));
   }
+
+  Future<void> updateTaskStatus(String taskId, TaskStatus newStatus) async {
+    final task = state.firstWhere((t) => t.id == taskId);
+    await updateTask(task.copyWith(
+      status: newStatus,
+      completedAt: newStatus == TaskStatus.completed ? DateTime.now() : null,
+    ));
+  }
 }
 
 final taskProvider = StateNotifierProvider<TaskNotifier, List<Task>>((ref) {
