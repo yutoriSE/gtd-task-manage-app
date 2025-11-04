@@ -2,19 +2,31 @@ import 'package:hive/hive.dart';
 
 part 'task.g.dart';
 
+@HiveType(typeId: 3)
 enum TaskStatus {
+  @HiveField(0)
   inbox,
+  @HiveField(1)
   nextAction,
+  @HiveField(2)
   waiting,
+  @HiveField(3)
   somedayMaybe,
+  @HiveField(4)
   completed,
+  @HiveField(5)
   deleted,
 }
 
+@HiveType(typeId: 4)
 enum Priority {
+  @HiveField(0)
   low,
+  @HiveField(1)
   medium,
+  @HiveField(2)
   high,
+  @HiveField(3)
   urgent,
 }
 

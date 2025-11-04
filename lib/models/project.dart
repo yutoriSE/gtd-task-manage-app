@@ -2,10 +2,15 @@ import 'package:hive/hive.dart';
 
 part 'project.g.dart';
 
+@HiveType(typeId: 5)
 enum ProjectStatus {
+  @HiveField(0)
   active,
+  @HiveField(1)
   onHold,
+  @HiveField(2)
   completed,
+  @HiveField(3)
   archived,
 }
 
