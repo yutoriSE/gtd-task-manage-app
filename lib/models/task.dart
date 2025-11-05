@@ -30,6 +30,52 @@ enum Priority {
   urgent,
 }
 
+@HiveType(typeId: 5)
+class ChecklistItem extends HiveObject {
+  @HiveField(0)
+  String id;
+
+  @HiveField(1)
+  String title;
+
+  @HiveField(2)
+  bool isCompleted;
+
+  ChecklistItem({
+    required this.id,
+    required this.title,
+    this.isCompleted = false,
+  });
+
+  ChecklistItem copyWith({
+    String? id,
+    String? title,
+    bool? isCompleted,
+  }) {
+    return ChecklistItem(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      isCompleted: isCompleted ?? this.isCompleted,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'isCompleted': isCompleted,
+    };
+  }
+
+  factory ChecklistItem.fromJson(Map<String, dynamic> json) {
+    return ChecklistItem(
+      id: json['id'],
+      title: json['title'],
+      isCompleted: json['isCompleted'] ?? false,
+    );
+  }
+}
+
 @HiveType(typeId: 0)
 class Task extends HiveObject {
   @HiveField(0)
@@ -74,6 +120,12 @@ class Task extends HiveObject {
   @HiveField(13)
   int? estimatedMinutes;
 
+  @HiveField(14)
+  List<ChecklistItem> checklist;
+
+  @HiveField(15)
+  List<String> links;
+
   Task({
     required this.id,
     required this.title,
@@ -89,8 +141,12 @@ class Task extends HiveObject {
     this.waitingFor,
     List<String>? tags,
     this.estimatedMinutes,
+    List<ChecklistItem>? checklist,
+    List<String>? links,
   })  : contexts = contexts ?? [],
         tags = tags ?? [],
+        checklist = checklist ?? [],
+        links = links ?? [],
         createdAt = createdAt ?? DateTime.now();
 
   Task copyWith({
@@ -108,6 +164,8 @@ class Task extends HiveObject {
     String? waitingFor,
     List<String>? tags,
     int? estimatedMinutes,
+    List<ChecklistItem>? checklist,
+    List<String>? links,
   }) {
     return Task(
       id: id ?? this.id,
@@ -124,6 +182,8 @@ class Task extends HiveObject {
       waitingFor: waitingFor ?? this.waitingFor,
       tags: tags ?? this.tags,
       estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
+      checklist: checklist ?? this.checklist,
+      links: links ?? this.links,
     );
   }
 
@@ -143,6 +203,8 @@ class Task extends HiveObject {
       'waitingFor': waitingFor,
       'tags': tags,
       'estimatedMinutes': estimatedMinutes,
+      'checklist': checklist.map((item) => item.toJson()).toList(),
+      'links': links,
     };
   }
 
@@ -162,6 +224,10 @@ class Task extends HiveObject {
       waitingFor: json['waitingFor'],
       tags: List<String>.from(json['tags'] ?? []),
       estimatedMinutes: json['estimatedMinutes'],
+      checklist: (json['checklist'] as List<dynamic>?)
+          ?.map((item) => ChecklistItem.fromJson(item))
+          .toList() ?? [],
+      links: List<String>.from(json['links'] ?? []),
     );
   }
 }

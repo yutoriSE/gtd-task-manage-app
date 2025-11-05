@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dashboard_screen.dart';
 import 'kanban_board_screen.dart';
 import 'inbox_screen.dart';
 import 'next_actions_screen.dart';
@@ -18,6 +19,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
+    const DashboardScreen(),
     const KanbanBoardScreen(),
     const InboxScreen(),
     const NextActionsScreen(),
@@ -27,6 +29,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   ];
 
   final List<NavigationDestination> _destinations = const [
+    NavigationDestination(
+      icon: Icon(Icons.dashboard_outlined),
+      selectedIcon: Icon(Icons.dashboard),
+      label: 'Dashboard',
+    ),
     NavigationDestination(
       icon: Icon(Icons.view_column_outlined),
       selectedIcon: Icon(Icons.view_column),
