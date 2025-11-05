@@ -702,144 +702,262 @@ class _TaskDetailDialogState extends ConsumerState<TaskDetailDialog>
     );
   }
 
-  void _addChecklistItem(BuildContext context) {
+  void _addChecklistItem(BuildContext context) async {
     final controller = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('チェックリスト項目を追加'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: '項目名',
-            border: OutlineInputBorder(),
+    try {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('チェックリスト項目を追加'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: '項目名',
+              border: OutlineInputBorder(),
+            ),
+            maxLength: 200,
+            autofocus: true,
           ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final trimmedTitle = controller.text.trim();
+                if (trimmedTitle.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('項目名を入力してください')),
+                  );
+                  return;
+                }
+                if (trimmedTitle.length > 200) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('項目名は200文字以内で入力してください')),
+                  );
+                  return;
+                }
                 setState(() {
                   _checklist.add(ChecklistItem(
                     id: const Uuid().v4(),
-                    title: controller.text,
+                    title: trimmedTitle,
                   ));
                 });
                 Navigator.pop(context);
-              }
-            },
-            child: const Text('追加'),
-          ),
-        ],
-      ),
-    );
+              },
+              child: const Text('追加'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      controller.dispose();
+    }
   }
 
-  void _editChecklistItem(BuildContext context, int index) {
+  void _editChecklistItem(BuildContext context, int index) async {
     final controller = TextEditingController(text: _checklist[index].title);
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('チェックリスト項目を編集'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: '項目名',
-            border: OutlineInputBorder(),
+    try {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('チェックリスト項目を編集'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: '項目名',
+              border: OutlineInputBorder(),
+            ),
+            maxLength: 200,
+            autofocus: true,
           ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final trimmedTitle = controller.text.trim();
+                if (trimmedTitle.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('項目名を入力してください')),
+                  );
+                  return;
+                }
+                if (trimmedTitle.length > 200) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('項目名は200文字以内で入力してください')),
+                  );
+                  return;
+                }
                 setState(() {
                   _checklist[index] =
-                      _checklist[index].copyWith(title: controller.text);
+                      _checklist[index].copyWith(title: trimmedTitle);
                 });
                 Navigator.pop(context);
-              }
-            },
-            child: const Text('保存'),
-          ),
-        ],
-      ),
-    );
+              },
+              child: const Text('保存'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      controller.dispose();
+    }
   }
 
-  void _addLink(BuildContext context) {
+  void _addLink(BuildContext context) async {
     final controller = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('リンクを追加'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'URL',
-            hintText: 'https://example.com',
-            border: OutlineInputBorder(),
+    try {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('リンクを追加'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'URL',
+              hintText: 'https://example.com',
+              border: OutlineInputBorder(),
+              helperText: 'http:// または https:// で始まるURLを入力',
+            ),
+            keyboardType: TextInputType.url,
+            autofocus: true,
           ),
-          keyboardType: TextInputType.url,
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final url = controller.text.trim();
+
+                if (url.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('URLを入力してください')),
+                  );
+                  return;
+                }
+
+                final uri = Uri.tryParse(url);
+                if (uri == null || !uri.hasScheme || !(uri.scheme == 'http' || uri.scheme == 'https')) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('有効なURL（http://またはhttps://）を入力してください'),
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                  return;
+                }
+
                 setState(() {
-                  _links.add(controller.text);
+                  _links.add(url);
                 });
                 Navigator.pop(context);
-              }
-            },
-            child: const Text('追加'),
-          ),
-        ],
-      ),
-    );
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('リンクを追加しました')),
+                  );
+                }
+              },
+              child: const Text('追加'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      controller.dispose();
+    }
   }
 
   void _openLink(String url) async {
     final uri = Uri.tryParse(url);
-    if (uri != null && await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+    if (uri == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('無効なURLです')),
+        );
+      }
+      return;
+    }
+
+    try {
+      final canLaunch = await canLaunchUrl(uri);
+      if (canLaunch) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('このURLを開けません')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('リンクを開けませんでした: ${e.toString()}')),
+        );
+      }
     }
   }
 
   void _saveTask() {
-    if (_titleController.text.isEmpty) {
+    final trimmedTitle = _titleController.text.trim();
+    final trimmedDescription = _descriptionController.text.trim();
+
+    if (trimmedTitle.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('タスク名を入力してください')),
+      );
       return;
     }
 
-    final updatedTask = widget.task.copyWith(
-      title: _titleController.text,
-      description: _descriptionController.text.isEmpty
-          ? null
-          : _descriptionController.text,
-      priority: _selectedPriority,
-      dueDate: _dueDate,
-      checklist: _checklist,
-      links: _links,
-    );
+    if (trimmedTitle.length > 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('タスク名は200文字以内で入力してください')),
+      );
+      return;
+    }
 
-    ref.read(taskProvider.notifier).updateTask(updatedTask);
-    Navigator.pop(context);
+    if (trimmedDescription.length > 2000) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('説明は2000文字以内で入力してください')),
+      );
+      return;
+    }
+
+    try {
+      final updatedTask = widget.task.copyWith(
+        title: trimmedTitle,
+        description: trimmedDescription.isEmpty ? null : trimmedDescription,
+        priority: _selectedPriority,
+        dueDate: _dueDate,
+        checklist: _checklist,
+        links: _links,
+      );
+
+      ref.read(taskProvider.notifier).updateTask(updatedTask);
+      Navigator.pop(context);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('タスクを保存しました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('タスクの保存に失敗しました: ${e.toString()}')),
+        );
+      }
+    }
   }
 }

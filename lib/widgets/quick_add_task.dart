@@ -49,6 +49,7 @@ class _QuickAddTaskState extends ConsumerState<QuickAddTask> {
               labelText: 'タスク名',
               border: OutlineInputBorder(),
             ),
+            maxLength: 200,
             autofocus: true,
             textInputAction: TextInputAction.next,
           ),
@@ -60,6 +61,7 @@ class _QuickAddTaskState extends ConsumerState<QuickAddTask> {
               border: OutlineInputBorder(),
             ),
             maxLines: 3,
+            maxLength: 2000,
             textInputAction: TextInputAction.done,
           ),
           const SizedBox(height: 16),
@@ -115,7 +117,27 @@ class _QuickAddTaskState extends ConsumerState<QuickAddTask> {
   }
 
   void _addTask() {
-    if (_titleController.text.isEmpty) {
+    final trimmedTitle = _titleController.text.trim();
+    final trimmedDescription = _descriptionController.text.trim();
+
+    if (trimmedTitle.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('タスク名を入力してください')),
+      );
+      return;
+    }
+
+    if (trimmedTitle.length > 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('タスク名は200文字以内で入力してください')),
+      );
+      return;
+    }
+
+    if (trimmedDescription.length > 2000) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('説明は2000文字以内で入力してください')),
+      );
       return;
     }
 
@@ -124,17 +146,29 @@ class _QuickAddTaskState extends ConsumerState<QuickAddTask> {
       status = TaskStatus.nextAction;
     }
 
-    final task = Task(
-      id: const Uuid().v4(),
-      title: _titleController.text,
-      description: _descriptionController.text.isEmpty
-          ? null
-          : _descriptionController.text,
-      status: status,
-      priority: _selectedPriority,
-    );
+    try {
+      final task = Task(
+        id: const Uuid().v4(),
+        title: trimmedTitle,
+        description: trimmedDescription.isEmpty ? null : trimmedDescription,
+        status: status,
+        priority: _selectedPriority,
+      );
 
-    ref.read(taskProvider.notifier).addTask(task);
-    Navigator.pop(context);
+      ref.read(taskProvider.notifier).addTask(task);
+      Navigator.pop(context);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('タスクを作成しました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('タスクの作成に失敗しました: ${e.toString()}')),
+        );
+      }
+    }
   }
 }
