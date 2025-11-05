@@ -30,7 +30,7 @@ enum Priority {
   urgent,
 }
 
-@HiveType(typeId: 5)
+@HiveType(typeId: 6)
 class ChecklistItem extends HiveObject {
   @HiveField(0)
   String id;
