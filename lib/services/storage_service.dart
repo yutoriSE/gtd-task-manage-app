@@ -15,6 +15,7 @@ class StorageService {
     Hive.registerAdapter(TaskAdapter());
     Hive.registerAdapter(TaskStatusAdapter());
     Hive.registerAdapter(PriorityAdapter());
+    Hive.registerAdapter(ChecklistItemAdapter());
     Hive.registerAdapter(ProjectAdapter());
     Hive.registerAdapter(ProjectStatusAdapter());
     Hive.registerAdapter(GTDContextAdapter());

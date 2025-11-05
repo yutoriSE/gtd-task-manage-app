@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/task.dart';
 import '../providers/task_provider.dart';
+import '../widgets/task_detail_dialog.dart';
 
 class KanbanBoardScreen extends ConsumerWidget {
   const KanbanBoardScreen({super.key});
@@ -170,54 +171,98 @@ class KanbanBoardScreen extends ConsumerWidget {
   }
 
   Widget _buildTaskCard(BuildContext context, WidgetRef ref, Task task) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final hasChecklist = task.checklist.isNotEmpty;
+    final completedItems = task.checklist.where((item) => item.isCompleted).length;
+    final totalItems = task.checklist.length;
+
     return Draggable<Task>(
       data: task,
       feedback: Material(
         elevation: 8,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
           width: 280,
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colorScheme.surfaceVariant.withOpacity(0.3),
+                colorScheme.surface,
+              ],
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: _buildTaskCardContent(context, task),
+          child: _buildTaskCardContent(context, task, hasChecklist, completedItems, totalItems),
         ),
       ),
       childWhenDragging: Opacity(
         opacity: 0.3,
         child: Card(
-          margin: const EdgeInsets.only(bottom: 8),
+          margin: const EdgeInsets.only(bottom: 12),
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: colorScheme.outlineVariant),
+          ),
           child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: _buildTaskCardContent(context, task),
+            padding: const EdgeInsets.all(16),
+            child: _buildTaskCardContent(context, task, hasChecklist, completedItems, totalItems),
           ),
         ),
       ),
       child: Card(
-        margin: const EdgeInsets.only(bottom: 8),
+        margin: const EdgeInsets.only(bottom: 12),
         elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: InkWell(
           onTap: () => _showTaskDetails(context, ref, task),
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: _buildTaskCardContent(context, task),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  colorScheme.surfaceVariant.withOpacity(0.1),
+                  colorScheme.surface,
+                ],
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: _buildTaskCardContent(context, task, hasChecklist, completedItems, totalItems),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTaskCardContent(BuildContext context, Task task) {
+  Widget _buildTaskCardContent(BuildContext context, Task task, bool hasChecklist, int completedItems, int totalItems) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    bool isOverdue = false;
+
+    if (task.dueDate != null) {
+      final dueDay = DateTime(task.dueDate!.year, task.dueDate!.month, task.dueDate!.day);
+      isOverdue = dueDay.isBefore(today);
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -228,7 +273,7 @@ class KanbanBoardScreen extends ConsumerWidget {
                 task.title,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                  fontSize: 15,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -241,50 +286,138 @@ class KanbanBoardScreen extends ConsumerWidget {
           ],
         ),
         if (task.description != null && task.description!.isNotEmpty) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             task.description!,
             style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
+              fontSize: 13,
+              color: colorScheme.onSurfaceVariant,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ],
-        if (task.dueDate != null) ...[
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.calendar_today, size: 12, color: Colors.grey[600]),
-              const SizedBox(width: 4),
-              Text(
-                _formatDate(task.dueDate!),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey[600],
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            if (task.dueDate != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isOverdue
+                      ? Colors.red.withOpacity(0.1)
+                      : colorScheme.primaryContainer.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: isOverdue ? Colors.red : colorScheme.primary,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isOverdue ? Icons.warning_amber : Icons.calendar_today,
+                      size: 12,
+                      color: isOverdue ? Colors.red : colorScheme.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _formatDate(task.dueDate!),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isOverdue ? Colors.red : colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
+            if (hasChecklist) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.green, width: 1),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.checklist, size: 12, color: Colors.green),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$completedItems/$totalItems',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
+            if (task.links.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.purple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.purple, width: 1),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.link, size: 12, color: Colors.purple),
+                    const SizedBox(width: 4),
+                    Text(
+                      task.links.length.toString(),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.purple,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
+          ],
+        ),
+        if (hasChecklist && totalItems > 0) ...[
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: completedItems / totalItems,
+              minHeight: 6,
+              backgroundColor: colorScheme.surfaceVariant,
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+            ),
           ),
         ],
         if (task.tags.isNotEmpty) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 4,
             runSpacing: 4,
             children: task.tags.take(3).map((tag) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
+                  color: colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   tag,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
-                    color: Colors.blue,
+                    fontWeight: FontWeight.w500,
+                    color: colorScheme.onSecondaryContainer,
                   ),
                 ),
               );
@@ -388,75 +521,7 @@ class KanbanBoardScreen extends ConsumerWidget {
   void _showTaskDetails(BuildContext context, WidgetRef ref, Task task) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(task.title),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (task.description != null && task.description!.isNotEmpty) ...[
-                const Text(
-                  'Description',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(task.description!),
-                const SizedBox(height: 16),
-              ],
-              Row(
-                children: [
-                  const Text(
-                    'Status: ',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text(_getStatusLabel(task.status)),
-                ],
-              ),
-              if (task.priority != null) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Text(
-                      'Priority: ',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    _buildPriorityBadge(task.priority!),
-                  ],
-                ),
-              ],
-              if (task.dueDate != null) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Text(
-                      'Due Date: ',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(_formatDate(task.dueDate!)),
-                  ],
-                ),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-          FilledButton(
-            onPressed: () {
-              ref.read(taskProvider.notifier).deleteTask(task.id);
-              Navigator.pop(context);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      builder: (context) => TaskDetailDialog(task: task),
     );
   }
 
