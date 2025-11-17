@@ -8,6 +8,14 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
     loadProjects();
   }
 
+  Project? _findProjectById(String projectId) {
+    final projectIndex = state.indexWhere((project) => project.id == projectId);
+    if (projectIndex == -1) {
+      return null;
+    }
+    return state[projectIndex];
+  }
+
   void loadProjects() {
     state = StorageService.getAllProjects();
   }
@@ -41,7 +49,8 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   }
 
   Future<void> completeProject(String projectId) async {
-    final project = state.firstWhere((p) => p.id == projectId);
+    final project = _findProjectById(projectId);
+    if (project == null) return;
     await updateProject(project.copyWith(
       status: ProjectStatus.completed,
       completedAt: DateTime.now(),
@@ -49,7 +58,8 @@ class ProjectNotifier extends StateNotifier<List<Project>> {
   }
 
   Future<void> archiveProject(String projectId) async {
-    final project = state.firstWhere((p) => p.id == projectId);
+    final project = _findProjectById(projectId);
+    if (project == null) return;
     await updateProject(project.copyWith(
       status: ProjectStatus.archived,
     ));
