@@ -8,6 +8,14 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     loadTasks();
   }
 
+  Task? _findTaskById(String taskId) {
+    final taskIndex = state.indexWhere((task) => task.id == taskId);
+    if (taskIndex == -1) {
+      return null;
+    }
+    return state[taskIndex];
+  }
+
   void loadTasks() {
     state = StorageService.getAllTasks();
   }
@@ -40,7 +48,8 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   }
 
   Future<void> moveToNextAction(String taskId) async {
-    final task = state.firstWhere((t) => t.id == taskId);
+    final task = _findTaskById(taskId);
+    if (task == null) return;
     await updateTask(task.copyWith(
       status: TaskStatus.nextAction,
       isActionable: true,
@@ -48,7 +57,8 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   }
 
   Future<void> moveToWaiting(String taskId, String waitingFor) async {
-    final task = state.firstWhere((t) => t.id == taskId);
+    final task = _findTaskById(taskId);
+    if (task == null) return;
     await updateTask(task.copyWith(
       status: TaskStatus.waiting,
       waitingFor: waitingFor,
@@ -56,14 +66,16 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   }
 
   Future<void> moveToSomedayMaybe(String taskId) async {
-    final task = state.firstWhere((t) => t.id == taskId);
+    final task = _findTaskById(taskId);
+    if (task == null) return;
     await updateTask(task.copyWith(
       status: TaskStatus.somedayMaybe,
     ));
   }
 
   Future<void> completeTask(String taskId) async {
-    final task = state.firstWhere((t) => t.id == taskId);
+    final task = _findTaskById(taskId);
+    if (task == null) return;
     await updateTask(task.copyWith(
       status: TaskStatus.completed,
       completedAt: DateTime.now(),
@@ -71,7 +83,8 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   }
 
   Future<void> uncompleteTask(String taskId) async {
-    final task = state.firstWhere((t) => t.id == taskId);
+    final task = _findTaskById(taskId);
+    if (task == null) return;
     await updateTask(task.copyWith(
       status: TaskStatus.nextAction,
       completedAt: null,
@@ -79,7 +92,8 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   }
 
   Future<void> updateTaskStatus(String taskId, TaskStatus newStatus) async {
-    final task = state.firstWhere((t) => t.id == taskId);
+    final task = _findTaskById(taskId);
+    if (task == null) return;
     await updateTask(task.copyWith(
       status: newStatus,
       completedAt: newStatus == TaskStatus.completed ? DateTime.now() : null,
